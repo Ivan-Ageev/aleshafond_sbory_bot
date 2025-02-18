@@ -5,7 +5,7 @@ import asyncio
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 # Укажите свой токен и ID чата
-TOKEN = "7242098598:AAF8OGHkUO-tuFXZMCCTzqPRA-HpdDY8CkM"  # Замените на свой токен
+TOKEN = "YOUR TOKEN"  # Замените на свой токен
 CHAT_ID = "-1002211895966"  # Замените на свой ID чата
 
 # Множество для хранения имен подопечных
