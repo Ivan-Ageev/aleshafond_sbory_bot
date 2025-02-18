@@ -1,0 +1,57 @@
+import requests
+from bs4 import BeautifulSoup
+from apscheduler.schedulers.blocking import BlockingScheduler
+from telegram import Bot
+
+# Telegram Bot токен и ID чата
+TOKEN = 7242098598:AAF8OGHkUO-tuFXZMCCTzqPRA-HpdDY8CkM
+CHAT_ID = 'your-chat-id'
+bot = Bot(token=TOKEN)
+
+# URL страницы, которую будем отслеживать
+URL = "https://aleshafond.ru/children"
+
+# Храним предыдущие статусы подопечных
+previous_statuses = {}
+
+# Функция для проверки статусов всех подопечных
+def check_statuses():
+    global previous_statuses
+
+    # Получаем HTML страницы
+    response = requests.get(URL)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Ищем всех подопечных (нужно настроить парсинг под HTML-структуру страницы)
+    children = soup.find_all('div', class_='children-card')  # Пример, нужно точно подобрать CSS класс
+
+    current_statuses = {}
+
+    for child in children:
+        # Получаем имя и статус подопечного
+        name = child.find('div', class_='children-name').get_text(strip=True)
+        status = child.find('div', class_='children-status').get_text(strip=True)
+
+        # Сохраняем текущий статус
+        current_statuses[name] = status
+
+        # Проверяем, изменился ли статус с прошлого раза
+        if name in previous_statuses and previous_statuses[name] != status:
+            # Если статус изменился на "закрыт", отправляем уведомление
+            if 'закрыт' in status.lower():
+                send_notification(name, status)
+
+    # Обновляем статусы для следующей проверки
+    previous_statuses = current_statuses
+
+# Функция отправки уведомления в Telegram
+def send_notification(name, status):
+    message = f"Сбор для {name} изменился: {status}"
+    bot.send_message(chat_id=CHAT_ID, text=message)
+
+# Планировщик для проверки каждые 5 минут
+scheduler = BlockingScheduler()
+scheduler.add_job(check_statuses, 'interval', minutes=5)
+
+# Запуск планировщика
+scheduler.start()
